@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGV - Sistema de Gestión Vehicular | Bomberos Voluntarios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        fire: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            950: '#450a0a',
+                        },
+                        dark: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-item.active {
+            background-color: #991b1b;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        
+        /* Transitions */
+        .page-fade { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        input, select, textarea {
+            background: #1e293b !important;
+            border: 1px solid #334155 !important;
+            color: white !important;
+        }
+        input:focus, select:focus {
+            border-color: #ef4444 !important;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body class="h-full text-slate-200 overflow-hidden">
+
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-dark-950 border-r border-slate-800 transition-transform duration-300 transform -translate-x-full lg:translate-x-0">
+            <div class="flex flex-col h-full">
+                <!-- Brand -->
+                <div class="p-6 flex items-center space-x-3">
+                    <div class="bg-fire-700 p-2 rounded-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <span class="text-xl font-extrabold tracking-tight text-white">FIRE<span class="text-fire-600">FLEET</span></span>
+                </div>
+
+                <!-- Nav -->
+                <nav class="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
+                    <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Principal</p>
+                    <a href="#" onclick="showSection('dashboard')" class="sidebar-item active flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        Dashboard
+                    </a>
+                    <a href="#" onclick="showSection('fleet')" class="sidebar-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200 group">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                        Gestión de Móviles
+                    </a>
+                    
+                    <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Operaciones</p>
+                    <a href="#" onclick="showSection('faults')" class="sidebar-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        Reporte de Fallas
+                    </a>
+                    <a href="#" onclick="showSection('checklist')" class="sidebar-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        Checklist Diario
+                    </a>
+
+                    <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-6 mb-2">Mantenimiento</p>
+                    <a href="#" onclick="showSection('maintenance')" class="sidebar-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Bitácora
+                    </a>
+                    <a href="#" onclick="showSection('inventory')" class="sidebar-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                        Repuestos
+                    </a>
+                    <a href="#" onclick="showSection('vendors')" class="sidebar-item flex items-center px-3 py-2.5 text-sm font-medium rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Proveedores
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <main class="flex-1 flex flex-col lg:pl-64 h-full bg-slate-950 overflow-hidden">
+            <!-- Top Bar -->
+            <header class="h-16 flex items-center justify-between px-8 bg-dark-950 border-b border-slate-800 z-40">
+                <div class="flex items-center">
+                    <button id="menu-toggle" class="lg:hidden text-slate-400 mr-4 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                    <h1 id="current-section-title" class="text-xl font-bold text-white uppercase tracking-wider">Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="status-indicator" class="flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        <span class="text-xs font-medium text-emerald-500">Sistema Activo</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div id="main-content" class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                <!-- Sections will be injected here -->
+                <div id="section-container" class="max-w-7xl mx-auto space-y-8"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notifications" class="fixed bottom-4 right-4 z-[100] space-y-2"></div>
+
+    <script>
+        // Data Store (LocalStorage wrapped)
+        const store = {
+            fleet: JSON.parse(localStorage.getItem('ff_fleet')) || [
+                { id: 1, unit: 'Móvil 10', plate: 'ABC-123', model: 'Scania P360', type: 'Autobomba', status: 'In Service' },
+                { id: 2, unit: 'Móvil 22', plate: 'XYZ-987', model: 'Ford F-550', type: 'Rescate', status: 'Maintenance' }
+            ],
+            faults: JSON.parse(localStorage.getItem('ff_faults')) || [],
+            maintenance: JSON.parse(localStorage.getItem('ff_maintenance')) || [],
+            inventory: JSON.parse(localStorage.getItem('ff_inventory')) || [
+                { id: 1, name: 'Filtro de Aceite X', stock: 2, min: 5, category: 'Motor' },
+                { id: 2, name: 'Pastillas de Freno', stock: 12, min: 4, category: 'Frenos' }
+            ],
+            vendors: JSON.parse(localStorage.getItem('ff_vendors')) || [],
+            
+            save(key, data) {
+                localStorage.setItem(`ff_${key}`, JSON.stringify(data));
+                this[key] = data;
+                renderDashboard(); // Re-render dashboard charts if needed
+            }
+        };
+
+        // UI State
+        let currentSection = 'dashboard';
+
+        // --- Templates ---
+
+        const DashboardTemplate = () => `
+            <div class="page-fade space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    ${StatCard('Total Móviles', store.fleet.length, 'blue')}
+                    ${StatCard('En Servicio', store.fleet.filter(v => v.status === 'In Service').length, 'emerald')}
+                    ${StatCard('Fallas Activas', store.faults.filter(f => f.status === 'Pendiente').length, 'fire')}
+                    ${StatCard('Stock Crítico', store.inventory.filter(i => i.stock <= i.min).length, 'amber')}
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="glass-card p-6 rounded-2xl shadow-xl">
+                        <h3 class="text-lg font-semibold mb-6">Distribución de Flota</h3>
+                        <canvas id="fleetChart" height="200"></canvas>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl shadow-xl">
+                        <h3 class="text-lg font-semibold mb-6">Mantenimientos Recientes</h3>
+                        <canvas id="maintChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const FleetTemplate = () => `
+            <div class="page-fade space-y-6">
+                <div class="glass-card p-6 rounded-2xl">
+                    <h3 class="text-lg font-semibold mb-4 text-fire-500">Registrar Nuevo Móvil</h3>
+                    <form onsubmit="handleFleetSubmit(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" name="unit" placeholder="Número de Móvil (ej: Móvil 10)" required class="px-4 py-2 rounded-lg">
+                        <input type="text" name="plate" placeholder="Patente" required class="px-4 py-2 rounded-lg">
+                        <input type="text" name="model" placeholder="Marca/Modelo" required class="px-4 py-2 rounded-lg">
+                        <select name="type" class="px-4 py-2 rounded-lg">
+                            <option>Autobomba</option>
+                            <option>Rescate</option>
+                            <option>Logística</option>
+                            <option>Cisterna</option>
+                        </select>
+                        <select name="status" class="px-4 py-2 rounded-lg">
+                            <option value="In Service">En Servicio</option>
+                            <option value="Maintenance">En Mantenimiento</option>
+                            <option value="Out of Service">Fuera de Servicio</option>
+                        </select>
+                        <button type="submit" class="bg-fire-700 hover:bg-fire-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Guardar Móvil</button>
+                    </form>
+                </div>
+
+                <div class="glass-card overflow-hidden rounded-2xl shadow-xl">
+                    <div class="p-4 border-b border-slate-800 bg-white/5 flex justify-between items-center">
+                        <h3 class="font-semibold">Inventario de Flota</h3>
+                        <input type="text" placeholder="Buscar móvil..." onkeyup="filterTable(this, 'fleetTable')" class="px-3 py-1 text-sm rounded-md w-64">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="fleetTable" class="w-full text-left">
+                            <thead class="bg-white/5 text-slate-400 text-sm uppercase">
+                                <tr>
+                                    <th class="px-6 py-4 font-medium">Unidad</th>
+                                    <th class="px-6 py-4 font-medium">Modelo</th>
+                                    <th class="px-6 py-4 font-medium">Tipo</th>
+                                    <th class="px-6 py-4 font-medium">Estado</th>
+                                    <th class="px-6 py-4 font-medium">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800">
+                                ${store.fleet.map(v => `
+                                    <tr class="hover:bg-white/5 transition-colors">
+                                        <td class="px-6 py-4 font-bold text-white">${v.unit} <span class="block text-xs font-normal text-slate-500">${v.plate}</span></td>
+                                        <td class="px-6 py-4">${v.model}</td>
+                                        <td class="px-6 py-4">${v.type}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 rounded text-xs font-bold ${v.status === 'In Service' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-fire-500/20 text-fire-400'}">${v.status}</span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <button onclick="deleteItem('fleet', ${v.id})" class="text-slate-500 hover:text-fire-500 transition-colors">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const FaultsTemplate = () => `
+            <div class="page-fade space-y-6">
+                <div class="glass-card p-6 rounded-2xl">
+                    <h3 class="text-lg font-semibold mb-4 text-fire-500">Reportar Nueva Falla</h3>
+                    <form onsubmit="handleFaultSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <select name="unit" class="px-4 py-2 rounded-lg" required>
+                            <option value="">Seleccionar Móvil</option>
+                            ${store.fleet.map(v => `<option value="${v.unit}">${v.unit}</option>`).join('')}
+                        </select>
+                        <input type="text" name="component" placeholder="Componente (ej: Frenos)" required class="px-4 py-2 rounded-lg">
+                        <select name="severity" class="px-4 py-2 rounded-lg">
+                            <option value="Leve">Leve</option>
+                            <option value="Moderada">Moderada</option>
+                            <option value="Critica">Crítica (FS)</option>
+                        </select>
+                        <button type="submit" class="bg-fire-700 hover:bg-fire-600 text-white font-bold py-2 px-4 rounded-lg transition-colors">Reportar</button>
+                        <textarea name="desc" placeholder="Descripción detallada de la falla..." class="md:col-span-2 lg:col-span-4 px-4 py-2 rounded-lg h-24" required></textarea>
+                    </form>
+                </div>
+
+                <div class="glass-card overflow-hidden rounded-2xl shadow-xl">
+                    <div class="p-4 border-b border-slate-800 bg-white/5 flex justify-between items-center">
+                        <h3 class="font-semibold">Historial de Fallas</h3>
+                        <input type="text" placeholder="Buscar falla..." onkeyup="filterTable(this, 'faultTable')" class="px-3 py-1 text-sm rounded-md w-64">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="faultTable" class="w-full text-left">
+                            <thead class="bg-white/5 text-slate-400 text-sm uppercase">
+                                <tr>
+                                    <th class="px-6 py-4 font-medium">Fecha</th>
+                                    <th class="px-6 py-4 font-medium">Móvil</th>
+                                    <th class="px-6 py-4 font-medium">Componente</th>
+                                    <th class="px-6 py-4 font-medium">Gravedad</th>
+                                    <th class="px-6 py-4 font-medium">Estado</th>
+                                    <th class="px-6 py-4 font-medium text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800">
+                                ${store.faults.map(f => `
+                                    <tr class="hover:bg-white/5">
+                                        <td class="px-6 py-4 text-slate-400 text-sm">${new Date(f.date).toLocaleDateString()}</td>
+                                        <td class="px-6 py-4 font-bold">${f.unit}</td>
+                                        <td class="px-6 py-4">${f.component}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${f.severity === 'Critica' ? 'bg-fire-600 text-white' : 'bg-amber-500/20 text-amber-500'}">${f.severity}</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">${f.status}</td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button onclick="deleteItem('faults', ${f.id})" class="text-slate-500 hover:text-fire-500">Eliminar</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const InventoryTemplate = () => `
+            <div class="page-fade space-y-6">
+                <div class="glass-card p-6 rounded-2xl">
+                    <h3 class="text-lg font-semibold mb-4 text-fire-500">Añadir Repuesto / Insumo</h3>
+                    <form onsubmit="handleInventorySubmit(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="text" name="name" placeholder="Nombre del Repuesto" required class="px-4 py-2 rounded-lg">
+                        <input type="number" name="stock" placeholder="Stock Actual" required class="px-4 py-2 rounded-lg">
+                        <input type="number" name="min" placeholder="Mínimo Alerta" required class="px-4 py-2 rounded-lg">
+                        <button type="submit" class="bg-fire-700 hover:bg-fire-600 text-white font-bold py-2 px-4 rounded-lg">Agregar</button>
+                    </form>
+                </div>
+
+                <div class="glass-card overflow-hidden rounded-2xl">
+                    <table id="inventoryTable" class="w-full text-left">
+                        <thead class="bg-white/5 text-slate-400">
+                            <tr>
+                                <th class="px-6 py-4">Ítem</th>
+                                <th class="px-6 py-4">Stock</th>
+                                <th class="px-6 py-4">Mínimo</th>
+                                <th class="px-6 py-4">Estado</th>
+                                <th class="px-6 py-4 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800">
+                            ${store.inventory.map(item => {
+                                const isLow = item.stock <= item.min;
+                                return `
+                                    <tr class="${isLow ? 'bg-fire-950/30' : 'hover:bg-white/5'}">
+                                        <td class="px-6 py-4 font-medium ${isLow ? 'text-fire-400' : 'text-white'}">${item.name}</td>
+                                        <td class="px-6 py-4">${item.stock}</td>
+                                        <td class="px-6 py-4 text-slate-500">${item.min}</td>
+                                        <td class="px-6 py-4">
+                                            ${isLow ? 
+                                                '<span class="flex items-center text-fire-500 font-bold text-xs"><svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> RECOMPRAR</span>' : 
+                                                '<span class="text-emerald-500 text-xs font-bold uppercase">OK</span>'}
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button onclick="deleteItem('inventory', ${item.id})" class="text-slate-500 hover:text-fire-500">Borrar</button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        const ChecklistTemplate = () => {
+            const items = ["Luces de emergencia", "Sirenas / Pato", "Nivel de Aceite", "Nivel de Agua", "Presión de Neumáticos", "Equipo de Radio", "Herramientas de Rescate", "Combustible > 3/4"];
+            return `
+                <div class="page-fade space-y-6">
+                    <div class="glass-card p-8 rounded-3xl max-w-2xl mx-auto shadow-2xl">
+                        <div class="text-center mb-8">
+                            <h2 class="text-2xl font-black text-white uppercase tracking-tighter">Checklist de Salida</h2>
+                            <p class="text-slate-500 text-sm">Inspección de rutina diaria para operatividad inmediata</p>
+                        </div>
+                        <form onsubmit="handleChecklistSubmit(event)" class="space-y-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Vehículo</label>
+                                <select name="unit" class="w-full px-4 py-3 rounded-xl" required>
+                                    ${store.fleet.map(v => `<option value="${v.unit}">${v.unit}</option>`).join('')}
+                                </select>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                ${items.map((item, idx) => `
+                                    <div class="flex items-center justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-800">
+                                        <span class="text-sm font-medium">${item}</span>
+                                        <div class="flex space-x-2">
+                                            <label class="cursor-pointer">
+                                                <input type="radio" name="item_${idx}" value="OK" checked class="hidden peer">
+                                                <div class="px-3 py-1 rounded-lg text-[10px] font-bold border border-slate-700 peer-checked:bg-emerald-600 peer-checked:border-emerald-600 peer-checked:text-white transition-all">OK</div>
+                                            </label>
+                                            <label class="cursor-pointer">
+                                                <input type="radio" name="item_${idx}" value="FALLA" class="hidden peer">
+                                                <div class="px-3 py-1 rounded-lg text-[10px] font-bold border border-slate-700 peer-checked:bg-fire-600 peer-checked:border-fire-600 peer-checked:text-white transition-all">FALLA</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <button type="submit" class="w-full bg-fire-700 hover:bg-fire-600 text-white font-black py-4 rounded-xl transition-all shadow-lg shadow-fire-900/20 uppercase tracking-widest">Registrar Inspección</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        };
+
+        const MaintenanceTemplate = () => `
+            <div class="page-fade space-y-6">
+                <div class="glass-card p-6 rounded-2xl">
+                    <h3 class="text-lg font-semibold mb-4 text-fire-500">Registrar Mantenimiento</h3>
+                    <form onsubmit="handleMaintSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <select name="unit" class="px-4 py-2 rounded-lg" required>
+                             ${store.fleet.map(v => `<option value="${v.unit}">${v.unit}</option>`).join('')}
+                        </select>
+                        <input type="text" name="type" placeholder="Tipo (ej: Cambio Aceite)" required class="px-4 py-2 rounded-lg">
+                        <input type="number" name="km" placeholder="Kilometraje" required class="px-4 py-2 rounded-lg">
+                        <button type="submit" class="bg-fire-700 hover:bg-fire-600 text-white font-bold py-2 px-4 rounded-lg">Registrar</button>
+                        <textarea name="notes" placeholder="Notas adicionales..." class="md:col-span-2 lg:col-span-4 px-4 py-2 rounded-lg h-24"></textarea>
+                    </form>
+                </div>
+                
+                <div class="glass-card overflow-hidden rounded-2xl shadow-xl">
+                    <div class="p-4 bg-white/5 flex justify-between items-center">
+                        <h3 class="font-semibold">Log de Mantenimientos</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-white/5 text-slate-400">
+                                <tr>
+                                    <th class="px-6 py-4">Fecha</th>
+                                    <th class="px-6 py-4">Unidad</th>
+                                    <th class="px-6 py-4">Trabajo Realizado</th>
+                                    <th class="px-6 py-4">Kilometraje</th>
+                                    <th class="px-6 py-4 text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800">
+                                ${store.maintenance.map(m => `
+                                    <tr class="hover:bg-white/5">
+                                        <td class="px-6 py-4 text-slate-400 text-sm">${new Date(m.date).toLocaleDateString()}</td>
+                                        <td class="px-6 py-4 font-bold text-white">${m.unit}</td>
+                                        <td class="px-6 py-4">${m.type}</td>
+                                        <td class="px-6 py-4">${Number(m.km).toLocaleString()} km</td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button onclick="deleteItem('maintenance', ${m.id})" class="text-slate-500 hover:text-fire-500">Borrar</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const VendorsTemplate = () => `
+            <div class="page-fade space-y-6">
+                <div class="glass-card p-6 rounded-2xl">
+                    <h3 class="text-lg font-semibold mb-4 text-fire-500">Nuevo Proveedor</h3>
+                    <form onsubmit="handleVendorSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <input type="text" name="name" placeholder="Nombre de la Empresa" required class="px-4 py-2 rounded-lg">
+                        <input type="text" name="contact" placeholder="Contacto / Tel" required class="px-4 py-2 rounded-lg">
+                        <input type="text" name="service" placeholder="Rubro" required class="px-4 py-2 rounded-lg">
+                        <button type="submit" class="bg-fire-700 hover:bg-fire-600 text-white font-bold py-2 px-4 rounded-lg">Añadir</button>
+                    </form>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${store.vendors.map(v => `
+                        <div class="glass-card p-6 rounded-2xl relative group">
+                            <button onclick="deleteItem('vendors', ${v.id})" class="absolute top-4 right-4 text-slate-600 hover:text-fire-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                            <h4 class="text-xl font-bold text-white mb-1">${v.name}</h4>
+                            <p class="text-fire-500 text-xs font-black uppercase mb-4 tracking-widest">${v.service}</p>
+                            <div class="flex items-center text-slate-400 space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                <span>${v.contact}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        // Helper: Stat Card
+        function StatCard(label, value, color) {
+            const colors = {
+                fire: 'text-fire-500 border-fire-500/20 bg-fire-500/5',
+                emerald: 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5',
+                blue: 'text-blue-500 border-blue-500/20 bg-blue-500/5',
+                amber: 'text-amber-500 border-amber-500/20 bg-amber-500/5'
+            };
+            return `
+                <div class="glass-card p-6 rounded-2xl border-l-4 ${colors[color]}">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">${label}</p>
+                    <p class="text-3xl font-black text-white">${value}</p>
+                </div>
+            `;
+        }
+
+        // --- Controller Logic ---
+
+        function showSection(id) {
+            currentSection = id;
+            const container = document.getElementById('section-container');
+            const title = document.getElementById('current-section-title');
+            
+            // Update UI Nav
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.classList.remove('active', 'text-white', 'bg-fire-800');
+                el.classList.add('text-slate-400');
+            });
+            event?.currentTarget?.classList?.add('active');
+
+            // Render content
+            switch(id) {
+                case 'dashboard':
+                    title.innerText = "Dashboard Principal";
+                    container.innerHTML = DashboardTemplate();
+                    initCharts();
+                    break;
+                case 'fleet':
+                    title.innerText = "Gestión de Móviles";
+                    container.innerHTML = FleetTemplate();
+                    break;
+                case 'faults':
+                    title.innerText = "Reporte de Fallas";
+                    container.innerHTML = FaultsTemplate();
+                    break;
+                case 'inventory':
+                    title.innerText = "Inventario de Repuestos";
+                    container.innerHTML = InventoryTemplate();
+                    break;
+                case 'checklist':
+                    title.innerText = "Checklist Diario";
+                    container.innerHTML = ChecklistTemplate();
+                    break;
+                case 'maintenance':
+                    title.innerText = "Bitácora de Mantenimiento";
+                    container.innerHTML = MaintenanceTemplate();
+                    break;
+                case 'vendors':
+                    title.innerText = "Proveedores";
+                    container.innerHTML = VendorsTemplate();
+                    break;
+            }
+            
+            // Mobile sidebar auto-close
+            if (window.innerWidth < 1024) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+        }
+
+        // --- Form Handlers ---
+
+        function handleFleetSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newItem = {
+                id: Date.now(),
+                unit: formData.get('unit'),
+                plate: formData.get('plate'),
+                model: formData.get('model'),
+                type: formData.get('type'),
+                status: formData.get('status')
+            };
+            store.fleet.push(newItem);
+            store.save('fleet', store.fleet);
+            notify('Móvil registrado correctamente', 'success');
+            showSection('fleet');
+        }
+
+        function handleFaultSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newItem = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                unit: formData.get('unit'),
+                component: formData.get('component'),
+                severity: formData.get('severity'),
+                desc: formData.get('desc'),
+                status: 'Pendiente'
+            };
+            store.faults.push(newItem);
+            store.save('faults', store.faults);
+            notify('Falla reportada', 'warning');
+            showSection('faults');
+        }
+
+        function handleInventorySubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newItem = {
+                id: Date.now(),
+                name: formData.get('name'),
+                stock: parseInt(formData.get('stock')),
+                min: parseInt(formData.get('min'))
+            };
+            store.inventory.push(newItem);
+            store.save('inventory', store.inventory);
+            notify('Repuesto añadido al stock', 'success');
+            showSection('inventory');
+        }
+
+        function handleMaintSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newItem = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                unit: formData.get('unit'),
+                type: formData.get('type'),
+                km: formData.get('km'),
+                notes: formData.get('notes')
+            };
+            store.maintenance.push(newItem);
+            store.save('maintenance', store.maintenance);
+            notify('Mantenimiento registrado', 'success');
+            showSection('maintenance');
+        }
+
+        function handleVendorSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newItem = {
+                id: Date.now(),
+                name: formData.get('name'),
+                contact: formData.get('contact'),
+                service: formData.get('service')
+            };
+            store.vendors.push(newItem);
+            store.save('vendors', store.vendors);
+            notify('Proveedor agregado', 'success');
+            showSection('vendors');
+        }
+
+        function handleChecklistSubmit(e) {
+            e.preventDefault();
+            notify('Checklist guardado correctamente', 'success');
+            e.target.reset();
+        }
+
+        // --- Shared Logic ---
+
+        function deleteItem(key, id) {
+            if (confirm('¿Está seguro de eliminar este registro?')) {
+                const newData = store[key].filter(item => item.id !== id);
+                store.save(key, newData);
+                notify('Registro eliminado', 'fire');
+                showSection(currentSection);
+            }
+        }
+
+        function filterTable(input, tableId) {
+            const filter = input.value.toLowerCase();
+            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        }
+
+        function notify(msg, type) {
+            const n = document.getElementById('notifications');
+            const color = type === 'success' ? 'bg-emerald-600' : (type === 'warning' ? 'bg-amber-600' : 'bg-fire-700');
+            const el = document.createElement('div');
+            el.className = `${color} text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3 page-fade`;
+            el.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> <span>${msg}</span>`;
+            n.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        function initCharts() {
+            const ctxFleet = document.getElementById('fleetChart').getContext('2d');
+            const inService = store.fleet.filter(v => v.status === 'In Service').length;
+            const outService = store.fleet.length - inService;
+
+            new Chart(ctxFleet, {
+                type: 'doughnut',
+                data: {
+                    labels: ['En Servicio', 'Fuera de Servicio'],
+                    datasets: [{
+                        data: [inService, outService],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { weight: 'bold' } } } },
+                    cutout: '70%'
+                }
+            });
+
+            const ctxMaint = document.getElementById('maintChart').getContext('2d');
+            const maintLabels = store.maintenance.slice(-5).map(m => m.unit);
+            const maintData = store.maintenance.slice(-5).map(m => m.km);
+
+            new Chart(ctxMaint, {
+                type: 'bar',
+                data: {
+                    labels: maintLabels.length ? maintLabels : ['Sin datos'],
+                    datasets: [{
+                        label: 'KM al mantenimiento',
+                        data: maintData.length ? maintData : [0],
+                        backgroundColor: '#ef4444',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // --- Initialize ---
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // Start App
+        showSection('dashboard');
+    </script>
+</body>
+</html>
